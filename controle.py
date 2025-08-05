@@ -59,16 +59,65 @@ def relatorio():
             relatorio.tableClientes.setItem(i,j, QtWidgets.QTableWidgetItem(str(leitura_clientes[i][j])))
 
 
+numero_id_geral = 0
+
+
 def editar_dados():
+    global numero_id_geral
     dados = relatorio.tableClientes.currentRow()
     cursor = conexao.cursor()
     cursor.execute('select id from clientes')
     leitura_clientes = cursor.fetchall()
     id_ativo = leitura_clientes [dados] [0]
-    cursor.execute('select * from clientes where id= '+str(id_ativo))
+    cursor.execute('select * from clientes where id='+str(id_ativo))
     leitura_clientes = cursor.fetchall()
 
     editar.show()
+    numero_id_geral = id_ativo
+
+    editar.txtAlterarId.setText(str(leitura_clientes [0][0]))
+    editar.txtAlterarNome.setText(str(leitura_clientes [0][1]))
+    editar.txtAlterarCpf.setText(str(leitura_clientes [0][2]))
+    editar.txtAlterarIdade.setText(str(leitura_clientes [0][3]))
+    editar.txtAlterarRenda.setText(str(leitura_clientes [0][4]))
+    editar.txtAlterarSituacao.setText(str(leitura_clientes [0][5]))
+
+
+def alteracao_de_dados():
+    global numero_id_geral
+
+    id = editar.txtAlterarId.text()
+    nome = editar.txtAlterarNome.text()
+    cpf = editar.txtAlterarCpf.text()
+    idade = editar.txtAlterarIdade.text()
+    renda = editar.txtAlterarRenda.text()
+    situacao = editar.txtAlterarSituacao.text()
+
+    cursor = conexao.cursor()
+    cursor.execute("update clientes set id='{}',nome='{}',cpf='{}',idade='{}',renda='{}',situacao='{}' where id={}"
+                   .format(id,nome,cpf,idade,renda,situacao,numero_id_geral))
+    
+    editar.close()
+    relatorio.close()    
+    cadastro.show()
+    conexao.commit()
+
+
+def excluir_dados():
+
+    excluir = relatorio.tableClientes.currentRow()
+    relatorio.tableClientes.removeRow(excluir)
+
+    cursor = conexao.cursor()
+    cursor.execute('select id from clientes')
+    leitura_clientes = cursor.fetchall()
+    id_ativo = leitura_clientes [excluir] [0]
+
+    cursor.execute('delete from clientes where id='+str(id_ativo))
+
+    conexao.commit()
+
+
 
 
 app=QtWidgets.QApplication([])
@@ -80,8 +129,10 @@ cadastro.btnRelatorio.clicked.connect(relatorio)
 
 relatorio=uic.loadUi('relatorio.ui')
 relatorio.btnEditar.clicked.connect(editar_dados)
+relatorio.btnExcluir.clicked.connect(excluir_dados)
 
 editar=uic.loadUi('editar.ui')
+editar.btnAlterar.clicked.connect(alteracao_de_dados)
 
 cadastro.show()
 app.exec()
